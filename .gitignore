@@ -1,0 +1,15 @@
+# Maven
+target/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Intellij IDEA
+*.idea*
+*.iml
+
+# driver
+chromedriver.exe
