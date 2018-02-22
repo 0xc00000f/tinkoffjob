@@ -2,71 +2,87 @@
  * Created by admin on 21.02.2018.
  */
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.Proxy;
-import org.openqa.selenium.WebDriver;
+import func.TestBase;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.openqa.selenium.chrome.ChromeOptions;
-import java.io.File;
+import pages.Payments;
+import models.payment.housing.PaymentHousingMoscowWithId;
 
-import java.lang.*;
+import static pages.Payments.checkRegion;
+import static pages.Payments.chooseRegion;
+import static models.payment.housing.PaymentHousingMoscowWithId.xpathButtonSubmit;
+import static models.payment.housing.PaymentHousingMoscowWithId.xpathKnowArrears;
 
 
 /**
  * Creating with main goal to understand all necessary features for app architecture
  */
 
-public class Test001 {
+public class Test001 extends TestBase {
 
     @Test(description = "FirstTry")
-    public static void testTry() {
-        // 1. configure pom.xml
+    public void testTry() {
 
-        // 2. initiate chromedriver
-        // (1) Необходимо  задавать путь к драйверу через конфиги запуска теста
+        getWebDriver().isElementDisplayed("//div[@data-qa-file='UIProductBlockHeader']");
 
-        String exePath = "chromedriver.exe";
-        System.setProperty("webdriver.chrome.driver", exePath);
-        WebDriver driver = new ChromeDriver();
-
-        String baseUrl = "http://tinkoff.ru";
-
-        String expectedTitle = "Welcome: Mercury Tours";
-        String actualTitle = "";
-
-        // launch Fire fox and direct it to the Base URL
-        driver.get(baseUrl);
-
-        // (2) проверка ожидания элемента, кликабельности и пр..
-        // (3) закрытие браузера
-        // (4) логгер
-        WebElement logo = driver.findElement(By.xpath("//div[@data-qa-file='UIProductBlockHeader']"));
-
-        WebDriverWait wait = new WebDriverWait(driver,20);
-        wait.until(ExpectedConditions.elementToBeClickable(logo));
-
-        // Перехд на "Платежи"
-
-        // интересный момент со скрином экрана, если фулл скрин, то кнопка видна, если нет, то необходимо прожимать меню
-        // пока напишем для фулл скрина
-
-        WebElement payments = driver.findElement(By.xpath("//span[@data-qa-file='MenuItem' and .='Платежи']"));
+        WebElement payments = getWebDriver().getElement("//span[@data-qa-file='MenuItem' and .='Платежи']");
         payments.click();
+        getWebDriver().waitForPageLoaded();
 
-        // Перещли на Платежи, проверка
-//      TODO: Падает, обдумать
-//        WebElement paymentLine = driver.findElement(By.xpath("//span[@data-qa-file='Input' and .='Название или ИНН получателя платежа']"));
-//        Assert.assertTrue(paymentLine.isDisplayed());
+        Payments payments1 = new Payments("MSK");
+
+        // choose region for payment
+        chooseRegion(payments1, getWebDriver());
+        checkRegion(payments1, getWebDriver());
+
+        // click on button to pay for housing
+        getWebDriver().click(typicalXpath("ЖКХ"));
+        getWebDriver().waitForPageLoaded();
+
+        getWebDriver().click(typicalXpath("ЖКУ-Москва"));
+        getWebDriver().waitForPageLoaded();
+
+        PaymentHousingMoscowWithId housing = new PaymentHousingMoscowWithId();
+
+        // вводим код и мыло
+        getWebDriver().inputText("//input[@name='fieldpayerCode']", Long.toString(housing.getPaymentCode()));
+        getWebDriver().inputText("//input[@name='email']", housing.getEmail());
+
+        // вводим логин как телефонный номер (валидный) : проверки - пасс невидим, кнопка "Войти" активна
+        getWebDriver().inputText("//input[@name='login']", Long.toString(housing.getTelephoneNumber()));
+        Assert.assertTrue(!getWebDriver().isElementDisplayed("//input[@name='password']"));
+        Assert.assertTrue(getWebDriver().getElement(xpathButtonSubmit).isEnabled());
+
+        getWebDriver().clearText("//input[@name='login']");
+
+        // вводим логин как логин, поле пароль видимо, кнопка "Узнать задолженность" неактивна
+        getWebDriver().inputText("//input[@name='login']", housing.getLogin());
+        getWebDriver().waitForPageLoaded();
+        Assert.assertTrue(getWebDriver().isElementDisplayed("//input[@name='password']"));
+
+        // вводим пароль, кнопка должна быть активна
+        getWebDriver().inputText("//input[@name='password']", housing.getPassword());
+
+        // очищаем все поля
+        getWebDriver().clearText("//input[@name='fieldpayerCode']");
+        getWebDriver().clearText("//input[@name='login']");
+        getWebDriver().clearText("//input[@name='email']");
+
+        // нажимаем кнопку "Узнать задолженность"
+        getWebDriver().click(xpathKnowArrears);
+        getWebDriver().waitForPageLoaded();
 
 
+        Assert.assertEquals("Поле обязательное",
+                getWebDriver().getElement("//input[@name='fieldpayerCode']/ancestor::div[3]//div[@data-qa-file='UIFormRowError']").getText());
+        Assert.assertEquals("Поле обязательное",
+                getWebDriver().getElement("//input[@name='login']/ancestor::div[3]//div[@data-qa-file='UIFormRowError']").getText());
 
+        Assert.assertTrue(!getWebDriver().isElementDisplayed("//input[@name='password']"));
 
 
     }
+
 
 }

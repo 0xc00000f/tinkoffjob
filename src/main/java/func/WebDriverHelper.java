@@ -1,6 +1,7 @@
 package func;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriverService;
@@ -11,20 +12,21 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.RemoteWebElement;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
 
 import java.io.IOException;
 
 /**
  * Created by admin on 21.02.2018.
  */
-public class WebDriverHelper {
+public class WebDriverHelper extends TestBase {
 
     /**
      * Тип используемого веб-драйвера
      */
     private transient volatile WebDriver driver;
-    protected static ChromeDriverService service;
 
+    protected static ChromeDriverService service;
     /**
      * Максимальная задержка в секундах
      */
@@ -35,9 +37,8 @@ public class WebDriverHelper {
     private static final long SLEEPINMILS = 100;
 
     /**
-     * Запускаем сервис для Chrome драйвера
+     * Запуск сервиса Chrome-драйвера
      */
-
     protected void startChromeDriverService() {
 
         if (service == null) {
@@ -56,7 +57,7 @@ public class WebDriverHelper {
     }
 
     /**
-     * Останавливаем сервис для Chrome
+     * Завершение сервиса Chrome
      */
     protected void stopChromeDriverService() {
         if (service != null || service.isRunning()) {
@@ -68,7 +69,7 @@ public class WebDriverHelper {
     }
 
     /**
-     * Закрываем драйвер
+     * Закрыть веб-драйвер
      */
     public void quit() {
         try {
@@ -81,7 +82,6 @@ public class WebDriverHelper {
         } catch (Throwable t) {
         }
     }
-
 
     /**
      * Инициализация Веб-драйвера
@@ -102,7 +102,6 @@ public class WebDriverHelper {
             driver = new Augmenter().augment(driver);
 
         }
-
     }
 
     /**
@@ -137,6 +136,290 @@ public class WebDriverHelper {
                 }
             }
         }
+    }
+
+    /**
+     * Преобразовать строку в {@link By}
+     *
+     * @param pathToElement
+     *      адрес элемента в виде строки
+     * @return {@link By}
+     */
+    public static By getLocatorByPath(String pathToElement) {
+        if (pathToElement == null)
+            throw new IllegalArgumentException();
+        By locator = By.xpath(pathToElement);
+
+        return locator;
+    }
+
+    /**
+     * Быстрое получение элемента
+     *
+     * @param pathToElement
+     *          адрес элемента в виде строки
+     * @return {@link WebElement}
+     */
+    public WebElement getElement(String pathToElement) {
+        return getElement(getLocatorByPath(pathToElement));
+    }
+
+    /**
+     * Быстрое получение элемента
+     *
+     * @param locator
+     *          адрес элемента
+     * @return {@link WebElement}
+     */
+    public WebElement getElement(By locator) {
+
+        try {
+            return getDriver().findElement(locator);
+        } catch (Exception e) {
+
+        }
+        return null;
+    }
+
+    /**
+     * Проверка отображения элемента
+     *
+     * @param pathToElement
+     *              адрес элемента
+     * @return true - элемент отображается на странице
+     *         false - элемент не отображается на странице
+     */
+    public boolean isElementDisplayed(String pathToElement) {
+        return isElementDisplayed(getLocatorByPath(pathToElement));
+    }
+
+    /**
+     * Проверка отображения элемента
+     *
+     * @param locator
+     *              адрес элемента
+     * @return true - элемент отображается на странице
+     *         false - элемент не отображается на странице
+     */
+    public boolean isElementDisplayed(By locator) {
+        // элемент не виден по-умолчанию
+        boolean result = false;
+        try {
+            WebElement element = getElement(locator);
+            result = element != null && element.isDisplayed();
+        } catch (Exception e) {
+            result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Клик c ожиданием на элемент html-страницы
+     *
+     * @param pathToElement
+     *              адрес элемента
+     */
+    public void click(String pathToElement) {
+        // элемент, который хотим нажать
+        click(getLocatorByPath(pathToElement));
+    }
+
+    /**
+     * Клик c ожиданием на элемент html-страницы
+     *
+     * @param locator
+     *            адрес элемента
+     */
+    public void click(By locator) {
+
+        try {
+            // делаем попытки нажать на элемент
+            long tm = System.currentTimeMillis();
+            long end = tm + (TIMEOUT * 1000);
+            do {
+                WebElement element = getElement(locator);
+                if (element != null && element.isEnabled()) {
+                    // перемещаемся к элементу
+                    scrollToElement(element);
+                    if (element.isDisplayed()) {
+                        element.click();
+                        break;
+                    }
+                }
+            } while ((System.currentTimeMillis()) <= end && sleep(100));
+        } catch (Exception e) {
+
+        }
+    }
+
+    /**
+     * Скроллинг к нужному элементу
+     *
+     * @param pathToElement адрес элемента
+     */
+    public void scrollToElement(String pathToElement) {
+        scrollToElement(getLocatorByPath(pathToElement));
+    }
+
+    /**
+     * Скроллинг к нужному элементу
+     *
+     * @param locator адрес элемента
+     */
+    public void scrollToElement(By locator) {
+        scrollToElement(getElementWait(locator, TIMEOUT));
+    }
+
+    /**
+     * Скроллинг к нужному элементу
+     *
+     * @param element элемент
+     */
+    public WebElement scrollToElement(WebElement element) {
+
+        RemoteWebElement elem = (RemoteWebElement) element;
+        elem.getCoordinates().inViewPort();
+        return elem;
+    }
+
+    /**
+     * Обертка над sleep
+     *
+     * @param millis
+     *          время сна в миллисекундах
+     */
+    public static boolean sleep(long millis) {
+        if (millis < 0)
+            throw new IllegalArgumentException();
+        boolean result = true;
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Получение элемента с ожиданием
+     *
+     * @param locator
+     *          адрес элемента
+     * @param time
+     *          время ожидания в секундах
+     * @return {@link WebElement}
+     */
+    public WebElement getElementWait(final By locator, long time) {
+        return new WebDriverWait(getDriver(), time, SLEEPINMILS).until(new ExpectedCondition<WebElement>() {
+            public WebElement apply(WebDriver webDriver) {
+                try {
+                    WebElement element = getElement(locator);
+                    return element != null ? element : null;
+                } catch (Exception e) {
+                }
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Ожидание прогрузки страницы
+     */
+    public void waitForPageLoaded() {
+        ExpectedCondition<Boolean> expectation = new
+                ExpectedCondition<Boolean>() {
+                    public Boolean apply(WebDriver driver) {
+                        return ((JavascriptExecutor) driver).executeScript("return document.readyState").toString().equals("complete");
+                    }
+                };
+        try {
+            Thread.sleep(1000);
+            WebDriverWait wait = new WebDriverWait(driver, 30);
+            wait.until(expectation);
+        } catch (Throwable error) {
+            Assert.fail("Timeout waiting for Page Load Request to complete.");
+        }
+    }
+
+
+    /**
+     * Ввести текст в Веб-элемент
+     *
+     * @param pathToElement
+     *          адрес элемента
+     * @param text
+     *          вводимый текст
+     * @return {@WebElement}
+     */
+    public WebElement inputText(String pathToElement, String text) {
+        return inputText(getLocatorByPath(pathToElement), text);
+    }
+
+    /**
+     * Ввести текст в Веб-элемент
+     *
+     * @param locator
+     *          адрес элемента
+     * @param text
+     *          вводимый текст
+     * @return {@WebElement}
+     */
+    public WebElement inputText(By locator, String text) {
+        return inputText(getElementWait(locator, TIMEOUT), text);
+    }
+
+    /**
+     * Ввести текст в Веб-элемент
+     *
+     * @param element
+     *          адрес элемента
+     * @param text
+     *          вводимый текст
+     * @return {@WebElement}
+     */
+    public WebElement inputText(WebElement element, String text) {
+
+        scrollToElement(element);
+        // наполняем элемент значениями
+        sendKeys(element, text);
+        return element;
+    }
+
+    /**
+     * Послать нажатие клавиатуры на элемент
+     *
+     * @param element
+     *          адрес элемента
+     * @param keys
+     *          символы
+     */
+    public void sendKeys(WebElement element, String keys) {
+        if (element != null) {
+            element.sendKeys(keys);
+        }
+    }
+
+    /**
+     * Очистить текст элемента
+     *
+     * @param pathToElement
+     *          адрес элемента
+     */
+    public void clearText(String pathToElement) {
+        clearText(getLocatorByPath(pathToElement));
+        sleep(500);
+    }
+
+    /**
+     * Очистить текст элемента
+     *
+     * @param locator
+     *          адрес элемента
+     */
+    public void clearText(By locator) {
+        WebElement element = getElementWait(locator, TIMEOUT);
+        if (element != null)
+            element.clear();
     }
 
 }
