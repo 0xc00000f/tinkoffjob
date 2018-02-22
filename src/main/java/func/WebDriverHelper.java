@@ -1,9 +1,6 @@
 package func;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.Augmenter;
@@ -369,19 +366,33 @@ public class WebDriverHelper extends TestBase {
     }
 
     /**
-     * Ввести текст в Веб-элемент
+     * Вводит текст в поле
+     * Предварительно поле очищается от предыдущих значений
      *
      * @param element
-     *          адрес элемента
+     *          элемент
      * @param text
-     *          вводимый текст
-     * @return {@WebElement}
+     *          текст для ввода
+     * @return {@link WebElement}, в который вводили текст
      */
-    public WebElement inputText(WebElement element, String text) {
-
-        scrollToElement(element);
-        // наполняем элемент значениями
-        sendKeys(element, text);
+    public WebElement inputText(final WebElement element, String text) {
+        if (element == null)
+            throw new IllegalArgumentException();
+        if (text == null)
+            throw new IllegalArgumentException();
+        getWebDriver().scrollToElement(element);
+        if (element.isDisplayed())
+            element.click();
+        try {
+            element.clear();
+        } catch (Exception e) {
+            // выбрать весь текст
+            element.sendKeys(Keys.CONTROL, "a", Keys.BACK_SPACE);
+        }
+        try {
+            getWebDriver().sendKeys(element, text);
+        } catch (Exception e) {
+        }
         return element;
     }
 
@@ -419,7 +430,13 @@ public class WebDriverHelper extends TestBase {
     public void clearText(By locator) {
         WebElement element = getElementWait(locator, TIMEOUT);
         if (element != null)
+            if (element.isDisplayed())
+                element.click();
+        try {
             element.clear();
+        } catch (Exception e) {
+            element.sendKeys(Keys.CONTROL, "a", Keys.BACK_SPACE);
+        }
     }
 
 }
