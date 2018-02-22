@@ -9,6 +9,11 @@ import java.util.Random;
  * Created by admin on 21.02.2018.
  */
 public class TestBase {
+    /**
+     * Адрес строки поиска
+     */
+    public static String xpathSearchLine = "//div[@data-qa-file='SearchSuggested']//input[@data-qa-file='Input']";
+
 
     // вспомогательный объект класса
     private WebDriverHelper webDriverHelper;

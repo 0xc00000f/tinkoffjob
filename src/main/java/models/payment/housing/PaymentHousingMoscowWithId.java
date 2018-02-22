@@ -16,7 +16,7 @@ public class PaymentHousingMoscowWithId {
     String login;
     String password;
 
-    public static String xpathButtonSubmit = "//button[@type='submit' and @data-qa-file='UIButton']";
+    public static String xpathButtonSubmit = "//button[@type='submit' and @data-qa-file='UIButton']/span[.='Войти']";
     public static String xpathKnowArrears = "//button[@data-qa-file='UIButton' and .='Узнать задолженность']";
 
     public long getPaymentCode() {

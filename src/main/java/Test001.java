@@ -3,17 +3,18 @@
  */
 
 import func.TestBase;
+import models.payment.housing.PaymentHousingMoscowWithId;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.Payments;
-import models.payment.housing.PaymentHousingMoscowWithId;
 
-import static models.payment.housing.PaymentHousingMoscowWithId.generateInvalidPaymentCode;
+import java.util.ArrayList;
+import java.util.List;
+
+import static models.payment.housing.PaymentHousingMoscowWithId.*;
 import static pages.Payments.checkRegion;
 import static pages.Payments.chooseRegion;
-import static models.payment.housing.PaymentHousingMoscowWithId.xpathButtonSubmit;
-import static models.payment.housing.PaymentHousingMoscowWithId.xpathKnowArrears;
 
 
 /**
@@ -25,7 +26,7 @@ public class Test001 extends TestBase {
     @Test(description = "FirstTry")
     public void testTry() {
 
-        getWebDriver().isElementDisplayed("//div[@data-qa-file='UIProductBlockHeader']");
+        getWebDriver().isElementDisplayed("//span[@data-qa-file='TinkoffLogo']");
 
         WebElement payments = getWebDriver().getElement("//span[@data-qa-file='MenuItem' and .='Платежи']");
         payments.click();
@@ -55,7 +56,7 @@ public class Test001 extends TestBase {
         getWebDriver().inputText("//input[@name='email']", housing.getEmail());
 
         // заполним поле "телефон" некорректным значением
-        getWebDriver().inputText("//input[@name='login']", Long.toString(getRandomRussianTelephoneNumber()).substring(0,8));
+        getWebDriver().inputText("//input[@name='login']", Long.toString(getRandomRussianTelephoneNumber()).substring(0, 8));
         // нажимаем кнопку "Войти"
         getWebDriver().click(xpathButtonSubmit);
         // проверка выдачи правильной ошибки на веб-странице
@@ -94,24 +95,47 @@ public class Test001 extends TestBase {
         Assert.assertEquals("Введите корректный адрес эл. почты",
                 getWebDriver().getElement("//input[@name='email']/ancestor::div[3]//div[@data-qa-file='UIFormRowError']").getText());
 
-
         /**
          * Сделали все проверки над страницей (проделали кейс до п.7)
          */
+
+        getWebDriver().click("//span[@data-qa-file='TinkoffLogo']");
+
+        // copypaste
+
+        getWebDriver().click("//span[@data-qa-file='MenuItem' and .='Платежи']");
+        getWebDriver().waitForPageLoaded();
+
+        Payments payments2 = new Payments("MSK");
+
+        // choose region for payment
+        checkRegion(payments2, getWebDriver());
+        getWebDriver().inputText(xpathSearchLine, "ЖКХ");
+        getWebDriver().waitForPageLoaded();
+
+        List<WebElement> list = getWebDriver().getElements(
+                "//div[@data-qa-file='SuggestBlock']//following::div[@data-qa-file='SuggestEntry']/div[@data-qa-node='Text']");
+        ArrayList<String> result = new ArrayList<String>(list.size());
+        for (WebElement webElement : list) {
+            result.add((webElement).getText());
+        }
+
+        ArrayList<String> result2 = new ArrayList<String>();
+        /**
+         * Подаётся xpath, который вылавливает лишние данные, избавляемся в цикле
+         * Цикл до .size()-1 чтобы не учитывать последний пункт меню "Показать все"
+         */
+        for (int i = 0; i < result.size() - 1; i++) {
+            if (i % 2 == 0)
+                result2.add(result.get(i));
+        }
+
+        getWebDriver().click("//div[@data-qa-file='SuggestBlock']//following::div[@data-qa-file='SuggestEntry']/div[@data-qa-node='Text' and .='" + result2.get(0) + "']");
 
 
         /**
          * Все, что ниже, для брейкпоинтов, после удалить
          */
-        // нажимаем кнопку "Узнать задолженность"
-        getWebDriver().click(xpathKnowArrears);
-        getWebDriver().waitForPageLoaded();
-
-
-
-        Assert.assertEquals("Поле обязательное",
-                getWebDriver().getElement("//input[@name='login']/ancestor::div[3]//div[@data-qa-file='UIFormRowError']").getText());
-
         Assert.assertTrue(!getWebDriver().isElementDisplayed("//input[@name='password']"));
 
 

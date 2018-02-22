@@ -12,6 +12,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by admin on 21.02.2018.
@@ -177,6 +178,29 @@ public class WebDriverHelper extends TestBase {
         }
         return null;
     }
+
+    /**
+     * Получение списка элементов
+     *
+     * @param pathToElement
+     *          адрес элемента
+     * @return {@link List} of {@link WebElement}
+     */
+    public List<WebElement> getElements(String pathToElement) {
+        return getElements(getLocatorByPath(pathToElement));
+    }
+
+    /**
+     * Получение списка элементов
+     *
+     * @param locator
+     *          адрес элемента
+     * @return {@link List} of {@link WebElement}
+     */
+    public List<WebElement> getElements(By locator) {
+        return getDriver().findElements(locator);
+    }
+
 
     /**
      * Проверка отображения элемента
