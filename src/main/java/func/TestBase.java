@@ -1,14 +1,17 @@
 package func;
 
+import org.openqa.selenium.WebElement;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
  * Created by admin on 21.02.2018.
  */
-public class TestBase {
+public class TestBase extends WebDriverHelper {
     /**
      * Адрес строки поиска
      */
@@ -124,5 +127,43 @@ public class TestBase {
         return getRandomString(12) + "@gmail.com";
     }
 
+    public String getHtmlSourceCode() {
+        WebElement element = getWebDriver().getElement("//body");
+        return element.getText();
+    }
+
+    /**
+     * Получить xpath input-поля в DOM-дереве по его имени (@name)
+     *
+     * @param namefield
+     * @return {@String}
+     */
+    public static String getInputXpath(String namefield) {
+        return "//input[@name='" + namefield + "']";
+    }
+
+    public static ArrayList<String> getListOfStringsFromWebElements(String pathToElements, TestBase testBase) {
+
+        List<WebElement> elements = testBase.getWebDriver().getElements(pathToElements);
+        ArrayList<String> rtrn = new ArrayList<String>();
+        for (WebElement element1 : elements) {
+            rtrn.add(element1.getText());
+        }
+
+        return rtrn;
+    }
+
+
+    /**
+     * Получить первый элемент ArrayList'a
+     *
+     * @param list
+     *          список элементов
+     * @return {@String}
+     */
+    public static String getFirstElem(ArrayList<String> list) {
+        // по-хорошему нужен дженерик
+        return list.get(0);
+    }
 
 }

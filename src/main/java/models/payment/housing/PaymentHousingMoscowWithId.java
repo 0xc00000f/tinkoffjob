@@ -1,7 +1,12 @@
 package models.payment.housing;
 
 import func.TestBase;
+
+import java.util.ArrayList;
 import java.util.Random;
+
+import static func.TestBase.getInputXpath;
+import static func.TestBase.getListOfStringsFromWebElements;
 
 /**
  * Модель описания оплату ЖКХ в г.Москве, используя код плательщика
@@ -18,6 +23,31 @@ public class PaymentHousingMoscowWithId {
 
     public static String xpathButtonSubmit = "//button[@type='submit' and @data-qa-file='UIButton']/span[.='Войти']";
     public static String xpathKnowArrears = "//button[@data-qa-file='UIButton' and .='Узнать задолженность']";
+
+    public static String getXpathInputPaymentCode() {
+        return getInputXpath("fieldpayerCode");
+    }
+
+    public static String getXpathInputEmail() {
+        return getInputXpath("email");
+    }
+
+    public static String getXpathInputLogin() {
+        return getInputXpath("login");
+    }
+
+    public static String getXpathInputTelephone() {
+        return getInputXpath("login");
+    }
+
+    public static String getXpathInputPassword() {
+        return getInputXpath("password");
+    }
+
+    public static String getXpathErrorMessage(String xpath) {
+        return xpath + "/ancestor::div[3]//div[@data-qa-file='UIFormRowError']";
+    }
+
 
     public long getPaymentCode() {
         return paymentCode;
@@ -96,5 +126,8 @@ public class PaymentHousingMoscowWithId {
         return TestBase.getRandomString(random.nextInt(8)+6);
     }
 
+    public static ArrayList<String> getListOfCircleElements(TestBase testBase) {
+        return getListOfStringsFromWebElements("//li[@data-qa-file='UIMenuItemProvider']/span[2]//span", testBase);
+    }
 
 }

@@ -4,18 +4,21 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import func.TestBase;
 import func.WebDriverHelper;
-import org.testng.Assert;
+import org.openqa.selenium.WebElement;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+
 
 /**
  * Модель, описывающая платежи
  *
  * Created by admin on 21.02.2018.
  */
-public class Payments {
+public class Payments extends TestBase {
 
     String region;
     String regionCheckValue;
@@ -123,9 +126,47 @@ public class Payments {
      * @param helper
      *          вспомогательный объект
      */
-    public static void checkRegion(Payments payments, WebDriverHelper helper) {
-        Assert.assertEquals(helper.getElement(xpathPaymentsIn).getText(), payments.getRegionCheckValue());
+    public static Boolean checkRegion(Payments payments, WebDriverHelper helper) {
+        return helper.getElement(xpathPaymentsIn).getText().equals(payments.getRegionCheckValue());
     }
 
+    /**
+     * Перейти по ссылке элемента по его местоположению (номер строки)
+     *
+     * @param lineNumber
+     *          номер строки
+     * @param testBase
+     *          вспомогательный объект
+     */
+    public static void clickDropDownElement(int lineNumber, TestBase testBase) {
+        ArrayList<String> tmp = getListOfDropDownElements(testBase);
+        testBase.getWebDriver().click(
+                "//div[@data-qa-file='SuggestBlock']//following::div[@data-qa-file='SuggestEntry']/div[@data-qa-node='Text' and .='"
+                + tmp.get(lineNumber) + "']");
+    }
+
+    /**
+     * Получить список названий в выпадающем списке
+     * Список включает себя только главное название компании, предоставляющей услугу
+     *
+     * @param testBase
+     *          вспомогательный объект
+     * @return {@ArrayList} of {@String}
+     */
+    public static ArrayList<String> getListOfDropDownElements(TestBase testBase) {
+
+        ArrayList<String> result = getListOfStringsFromWebElements("//div[@data-qa-file='SuggestBlock']//following::div[@data-qa-file='SuggestEntry']/div[@data-qa-node='Text']", testBase);
+        ArrayList<String> result2 = new ArrayList<String>();
+        /**
+         * Подаётся xpath, который вылавливает лишние данные, избавляемся в цикле
+         * Цикл до .size()-1 чтобы не учитывать последний пункт меню "Показать все"
+         */
+        for (int i = 0; i < result.size() - 1; i++) {
+            if (i % 2 == 0)
+                result2.add(result.get(i));
+        }
+
+        return result2;
+    }
 
 }

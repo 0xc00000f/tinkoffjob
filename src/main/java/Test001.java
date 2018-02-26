@@ -4,17 +4,17 @@
 
 import func.TestBase;
 import models.payment.housing.PaymentHousingMoscowWithId;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.Payments;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static models.payment.housing.PaymentHousingMoscowWithId.*;
-import static pages.Payments.checkRegion;
-import static pages.Payments.chooseRegion;
+import static pages.Payments.*;
 
 
 /**
@@ -23,20 +23,19 @@ import static pages.Payments.chooseRegion;
 
 public class Test001 extends TestBase {
 
+    static String xpathPaymentsClickButton = "//span[@data-qa-file='MenuItem' and .='Платежи']";
+
     @Test(description = "FirstTry")
     public void testTry() {
 
         getWebDriver().isElementDisplayed("//span[@data-qa-file='TinkoffLogo']");
-
-        WebElement payments = getWebDriver().getElement("//span[@data-qa-file='MenuItem' and .='Платежи']");
-        payments.click();
+        getWebDriver().click(xpathPaymentsClickButton);
         getWebDriver().waitForPageLoaded();
 
         Payments payments1 = new Payments("MSK");
-
         // choose region for payment
-        chooseRegion(payments1, getWebDriver());
-        checkRegion(payments1, getWebDriver());
+        if (!checkRegion(payments1, getWebDriver()))
+            chooseRegion(payments1, getWebDriver());
 
         /**
          * Необходимость выбора первого элемента из списка, пока хардкод
@@ -46,64 +45,62 @@ public class Test001 extends TestBase {
         getWebDriver().click(typicalXpath("ЖКХ"));
         getWebDriver().waitForPageLoaded();
 
-        getWebDriver().click(typicalXpath("ЖКУ-Москва"));
+        // заходим в первый элемент, сохраняем в переменной для проверки
+        String firstMoscowPaymentHousing = getFirstElem(getListOfCircleElements(this));
+        getWebDriver().click(typicalXpath(firstMoscowPaymentHousing));
+
         getWebDriver().waitForPageLoaded();
 
+        getWebDriver().sleep(1000);
+
+        String pagePaymentMoscowHousing1 = getHtmlSourceCode();
         PaymentHousingMoscowWithId housing = new PaymentHousingMoscowWithId();
 
         // вводим код и мыло
-        getWebDriver().inputText("//input[@name='fieldpayerCode']", Long.toString(housing.getPaymentCode()));
-        getWebDriver().inputText("//input[@name='email']", housing.getEmail());
+        getWebDriver().inputText(getXpathInputPaymentCode(), Long.toString(housing.getPaymentCode()));
+        getWebDriver().inputText(getXpathInputEmail(), housing.getEmail());
 
         // заполним поле "телефон" некорректным значением
-        getWebDriver().inputText("//input[@name='login']", Long.toString(getRandomRussianTelephoneNumber()).substring(0, 8));
+        getWebDriver().inputText(getXpathInputTelephone(), Long.toString(getRandomRussianTelephoneNumber()).substring(0, 8));
         // нажимаем кнопку "Войти"
         getWebDriver().click(xpathButtonSubmit);
         // проверка выдачи правильной ошибки на веб-странице
         Assert.assertEquals("Минимальное количество символов – 10",
-                getWebDriver().getElement("//input[@name='login']/ancestor::div[3]//div[@data-qa-file='UIFormRowError']").getText());
-
+                getWebDriver().getElement(getXpathErrorMessage(getXpathInputTelephone())).getText());
 
         // вводим логин как телефонный номер (валидный) : проверки - пасс невидим, кнопка "Войти" активна
-        getWebDriver().inputText("//input[@name='login']", Long.toString(housing.getTelephoneNumber()));
-        Assert.assertTrue(!getWebDriver().isElementDisplayed("//input[@name='password']"));
+        getWebDriver().inputText(getXpathInputTelephone(), Long.toString(housing.getTelephoneNumber()));
+        Assert.assertTrue(!getWebDriver().isElementDisplayed(getXpathInputPassword()));
         Assert.assertTrue(getWebDriver().getElement(xpathButtonSubmit).isEnabled());
 
-        getWebDriver().clearText("//input[@name='login']");
-
         // вводим логин как логин, поле пароль видимо, кнопка "Узнать задолженность" неактивна
-        getWebDriver().inputText("//input[@name='login']", housing.getLogin());
+        getWebDriver().inputText(getXpathInputLogin(), housing.getLogin());
         getWebDriver().waitForPageLoaded();
-        Assert.assertTrue(getWebDriver().isElementDisplayed("//input[@name='password']"));
+        Assert.assertTrue(getWebDriver().isElementDisplayed(getXpathInputPassword()));
 
         // вводим пароль, кнопка должна быть активна
-        getWebDriver().inputText("//input[@name='password']", housing.getPassword());
+        getWebDriver().inputText(getXpathInputPassword(), housing.getPassword());
 
         // заполним поле Код плательщика некорректным значением
-        getWebDriver().inputText("//input[@name='fieldpayerCode']", Long.toString(generateInvalidPaymentCode()));
+        getWebDriver().inputText(getXpathInputPaymentCode(), Long.toString(generateInvalidPaymentCode()));
         // нажимаем кнопку "Узнать задолженность"
         getWebDriver().click(xpathKnowArrears);
         // проверка выдачи правильной ошибки на веб-странице
         Assert.assertEquals("Поле неправильно заполнено",
-                getWebDriver().getElement("//input[@name='fieldpayerCode']/ancestor::div[3]//div[@data-qa-file='UIFormRowError']").getText());
-
+                getWebDriver().getElement(getXpathErrorMessage(getXpathInputPaymentCode())).getText());
         // заполним поле email некорректным значением
-        getWebDriver().inputText("//input[@name='email']", getRandomString(7));
+        getWebDriver().inputText(getXpathInputEmail(), getRandomString(7));
         // нажимаем кнопку "Узнать задолженность"
         getWebDriver().click(xpathKnowArrears);
         // проверка выдачи правильной ошибки на веб-странице
         Assert.assertEquals("Введите корректный адрес эл. почты",
-                getWebDriver().getElement("//input[@name='email']/ancestor::div[3]//div[@data-qa-file='UIFormRowError']").getText());
+                getWebDriver().getElement(getXpathErrorMessage(getXpathInputEmail())).getText());
 
         /**
          * Сделали все проверки над страницей (проделали кейс до п.7)
          */
-
-        getWebDriver().click("//span[@data-qa-file='TinkoffLogo']");
-
-        // copypaste
-
-        getWebDriver().click("//span[@data-qa-file='MenuItem' and .='Платежи']");
+        goToStartPage(getWebDriver());
+        getWebDriver().click(xpathPaymentsClickButton);
         getWebDriver().waitForPageLoaded();
 
         Payments payments2 = new Payments("MSK");
@@ -113,31 +110,37 @@ public class Test001 extends TestBase {
         getWebDriver().inputText(xpathSearchLine, "ЖКХ");
         getWebDriver().waitForPageLoaded();
 
-        List<WebElement> list = getWebDriver().getElements(
-                "//div[@data-qa-file='SuggestBlock']//following::div[@data-qa-file='SuggestEntry']/div[@data-qa-node='Text']");
-        ArrayList<String> result = new ArrayList<String>(list.size());
-        for (WebElement webElement : list) {
-            result.add((webElement).getText());
-        }
+        clickDropDownElement(0, this);
+        getWebDriver().waitForPageLoaded();
+        getWebDriver().sleep(1000);
 
-        ArrayList<String> result2 = new ArrayList<String>();
-        /**
-         * Подаётся xpath, который вылавливает лишние данные, избавляемся в цикле
-         * Цикл до .size()-1 чтобы не учитывать последний пункт меню "Показать все"
-         */
-        for (int i = 0; i < result.size() - 1; i++) {
-            if (i % 2 == 0)
-                result2.add(result.get(i));
-        }
 
-        getWebDriver().click("//div[@data-qa-file='SuggestBlock']//following::div[@data-qa-file='SuggestEntry']/div[@data-qa-node='Text' and .='" + result2.get(0) + "']");
-
+        String pagePaymentMoscowHousing2 = getHtmlSourceCode();
 
         /**
-         * Все, что ниже, для брейкпоинтов, после удалить
+         * На этом моменте надо сравнить два wp
          */
-        Assert.assertTrue(!getWebDriver().isElementDisplayed("//input[@name='password']"));
 
+        Assert.assertEquals(pagePaymentMoscowHousing1, pagePaymentMoscowHousing2);
+
+        goToStartPage(getWebDriver());
+
+        getWebDriver().getElement(xpathPaymentsClickButton).click();
+        getWebDriver().waitForPageLoaded();
+
+        Payments payments3 = new Payments("SPB");
+
+        if (!checkRegion(payments3, getWebDriver()))
+            chooseRegion(payments3, getWebDriver());
+
+        getWebDriver().click(typicalXpath("ЖКХ"));
+        getWebDriver().waitForPageLoaded();
+
+        getWebDriver().sleep(1000);
+
+        ArrayList<String> listOfNamesSpbHousing = getListOfCircleElements(this);
+
+        Assert.assertNotEquals(getFirstElem(listOfNamesSpbHousing), firstMoscowPaymentHousing);
 
     }
 

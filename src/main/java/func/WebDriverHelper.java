@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Created by admin on 21.02.2018.
  */
-public class WebDriverHelper extends TestBase {
+public class WebDriverHelper  {
 
     /**
      * Тип используемого веб-драйвера
@@ -404,7 +404,7 @@ public class WebDriverHelper extends TestBase {
             throw new IllegalArgumentException();
         if (text == null)
             throw new IllegalArgumentException();
-        getWebDriver().scrollToElement(element);
+        scrollToElement(element);
         if (element.isDisplayed())
             element.click();
         try {
@@ -414,7 +414,7 @@ public class WebDriverHelper extends TestBase {
             element.sendKeys(Keys.CONTROL, "a", Keys.BACK_SPACE);
         }
         try {
-            getWebDriver().sendKeys(element, text);
+            sendKeys(element, text);
         } catch (Exception e) {
         }
         return element;
@@ -461,6 +461,14 @@ public class WebDriverHelper extends TestBase {
         } catch (Exception e) {
             element.sendKeys(Keys.CONTROL, "a", Keys.BACK_SPACE);
         }
+    }
+
+    /**
+     * Переход на главную страницу
+     */
+    public static void goToStartPage(WebDriverHelper wdh) {
+        wdh.click("//span[@data-qa-file='TinkoffLogo']");
+        wdh.waitForPageLoaded();
     }
 
 }
